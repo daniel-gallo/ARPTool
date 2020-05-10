@@ -139,6 +139,8 @@ class Interface:
                             disable_ip_forwarding()
                         else:
                             enable_ip_forwarding()
+                    elif key in (ord('q'), ord('Q')):
+                        break
                     else:
                         continue
 
