@@ -1,5 +1,6 @@
 import curses
 from ipaddress import IPv4Network
+from os import getuid
 from threading import Thread, Lock
 from typing import Optional, List, Dict
 
@@ -146,4 +147,9 @@ class Interface:
             return
 
 
-Interface()
+if __name__ == '__main__':
+    if getuid() != 0:
+        print("You have to run this script as root")
+        exit(1)
+
+    Interface()
