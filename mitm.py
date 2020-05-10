@@ -73,17 +73,17 @@ def is_ip_forwarding_enabled() -> bool:
     return False
 
 
-def enable_ip_forwarding():
+def __change_ip_forwarding(value: int):
     if platform.system() == "Linux":
         with open(os.open(__linux_filename, os.O_WRONLY, 0o644), "w") as f:
-            f.write('1\n')
+            f.write(f"{value}\n")
     elif platform.system() == "Darwin":
-        run(("sysctl", "-w", "net.inet.ip.forwarding=1"), stdout=DEVNULL)
+        run(("sysctl", "-w", f"net.inet.ip.forwarding={value}"), stdout=DEVNULL)
+
+
+def enable_ip_forwarding():
+    __change_ip_forwarding(1)
 
 
 def disable_ip_forwarding():
-    if platform.system() == "Linux":
-        with open(os.open(__linux_filename, os.O_WRONLY, 0o644), "w") as f:
-            f.write('0\n')
-    elif platform.system() == "Darwin":
-        run(("sysctl", "-w", "net.inet.ip.forwarding=0"), stdout=DEVNULL)
+    __change_ip_forwarding(0)
