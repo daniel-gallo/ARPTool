@@ -7,6 +7,12 @@ from scapy.sendrecv import srp
 
 
 def get_manufacturer(manufacturers: Dict[str, str], mac_address: str) -> str:
+    """
+    Gets the manufacturer of the mac address mac_address consulting manufacturers
+    :param manufacturers: a dictionary with pairs (mac address - manufacturer)
+    :param mac_address
+    :return: manufacturer of the mac address if found or "Unknown manufacturer"
+    """
     if mac_address[:8] in manufacturers:
         return manufacturers[mac_address[:8]]
     elif mac_address[:10] in manufacturers:
