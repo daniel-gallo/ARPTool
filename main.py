@@ -5,12 +5,9 @@ from threading import Thread, Lock
 from time import sleep
 from typing import Optional, List, Dict
 
-import netifaces
-from scapy.layers.l2 import ARP
-from scapy.sendrecv import sr
-
 from lan_scanner import get_devices, Device
 from mitm import Poisoner, is_ip_forwarding_enabled, enable_ip_forwarding, disable_ip_forwarding
+from utils import get_gateway_information
 
 
 class Interface:
@@ -121,15 +118,10 @@ class Interface:
         self.print_center("Scanning network...")
 
         # Get gateway information
-        gateway_ip, iface = netifaces.gateways()["default"][netifaces.AF_INET]
-        netmask = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]["netmask"]
-        mask_bits = IPv4Network(f"0.0.0.0/{netmask}").prefixlen
-        cidr = f"{gateway_ip}/{mask_bits}"
-        ans, _ = sr(ARP(op="who-has", pdst=gateway_ip), verbose=False)
-        gateway_mac = ans[0][1].hwsrc
+        gateway_ip, gateway_mac, netmask = get_gateway_information()
         self.gateway = Device(ip_address=gateway_ip, mac_address=gateway_mac)
         # Launch the scan_network thread
-        Thread(target=self.scan_network, args=(cidr,), daemon=True).start()
+        Thread(target=self.scan_network, args=(netmask,), daemon=True).start()
 
         try:
             while True:
