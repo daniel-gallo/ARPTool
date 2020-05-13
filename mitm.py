@@ -101,12 +101,20 @@ def disable_ip_forwarding():
 
 def get_arp_cache() -> List[Device]:
     """
-    Fetch the system arp cache
+    Fetch the system arp cache (supports ip neigh and arp -a)
     :return: a list of the devices cached
     """
     devices = []
 
-    if which("arp") is not None:
+    if which("ip") is not None:
+        lines = check_output(("ip", "neigh")).decode().split('\n')
+        for line in lines:
+            fields = line.split()
+            if len(fields) >= 4:
+                ip_address = fields[0]
+                mac_address = fields[4]
+                devices.append(Device(ip_address, mac_address))
+    elif which("arp") is not None:
         lines = check_output(("arp", "-a")).decode().split('\n')
         for line in lines:
             fields = line.split()
