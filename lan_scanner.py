@@ -35,13 +35,13 @@ class Device:
         return tuple(map(int, self.ip_address.split('.'))) < tuple(map(int, other.ip_address.split('.')))
 
     def __eq__(self, other):
-        # Two devices are the same iff they have the same ip and mac address
-        return self.ip_address == other.ip_address and self.mac_address == other.mac_address
+        # Two devices are the same iff they have the same ip
+        return self.ip_address == other.ip_address
 
     def __hash__(self):
         return hash(str(self))
 
-    def __str__(self):
+    def __repr__(self):
         return f"{self.ip_address}\t{self.mac_address}\t{self.manufacturer}"
 
 
