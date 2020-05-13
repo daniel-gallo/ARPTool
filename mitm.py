@@ -1,12 +1,13 @@
 import os
 import platform
+from ipaddress import IPv4Network
 from shutil import which
 from subprocess import check_output, run, DEVNULL
 from threading import Thread, Event
 
 from scapy.layers.l2 import ARP, Ether
 from scapy.sendrecv import sendp
-from typing import List
+from typing import List, Tuple
 
 from lan_scanner import Device
 
@@ -112,6 +113,10 @@ def get_arp_cache() -> List[Device]:
             fields = line.split()
             if len(fields) >= 4:
                 ip_address = fields[0]
+                try:
+                    IPv4Network(ip_address)
+                except ValueError:
+                    continue
                 mac_address = fields[4]
                 devices.append(Device(ip_address, mac_address))
     elif which("arp") is not None:
