@@ -1,6 +1,4 @@
-from threading import Lock
-from time import sleep
-from typing import Dict, List, Callable
+from typing import Dict, List
 
 from scapy.layers.l2 import ARP, Ether
 from scapy.sendrecv import srp
@@ -47,22 +45,15 @@ class Device:
         return f"{self.ip_address}\t{self.mac_address}\t{self.manufacturer}"
 
 
-def discoverer(cidr: str, devices_list: List[Device], mutex: Lock, print_function: Callable, frequency: float):
-    manufacturers = {}
-    with open("manufacturers.txt") as f:
-        for line in f:
-            mac, manufacturer_name = tuple(line.strip().split('\t'))
-            manufacturers[mac] = manufacturer_name
-
-    while True:
-        answers, _ = srp(Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=cidr), timeout=.5, verbose=False)
-        devices = [Device(ip_address=answer[1].psrc,
-                          mac_address=answer[1].src,
-                          manufacturers=manufacturers) for answer in answers]
-
-        with mutex:
-            devices_list.extend(device for device in devices if device not in devices_list)
-            devices_list.sort()
-        print_function()
-
-        sleep(frequency)
+def get_devices(netmask: str, timeout: float, manufacturers: Dict[str, str] = None) -> List[Device]:
+    """
+    Performs an ARP scan of the local network
+    :param netmask: netmask of the LAN in CIDR format, like 192.168.1.1/24
+    :param timeout: time limit of the scan in seconds
+    :param manufacturers: if provided, devices will include the manufacturer (if known)
+    :return: a list of the devices found
+    """
+    answers, _ = srp(Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=netmask), timeout=timeout, verbose=False)
+    return [Device(ip_address=answer[1].psrc,
+                   mac_address=answer[1].src,
+                   manufacturers=manufacturers) for answer in answers]

@@ -2,17 +2,21 @@ import curses
 from ipaddress import IPv4Network
 from os import getuid
 from threading import Thread, Lock
+from time import sleep
 from typing import Optional, List, Dict
 
 import netifaces
 from scapy.layers.l2 import ARP
 from scapy.sendrecv import sr
 
-from discoverer import discoverer, Device
+from lan_scanner import get_devices, Device
 from mitm import Poisoner, is_ip_forwarding_enabled, enable_ip_forwarding, disable_ip_forwarding
 
 
 class Interface:
+    SCAN_TIMEOUT = 0.5
+    SCAN_DELAY = 2
+
     SELECTED_COLOR_SCHEME = 1
     IP_FORWARDING_ENABLED_COLOR_SCHEME = 2
     IP_FORWARDING_DISABLED_COLOR_SCHEME = 3
@@ -80,6 +84,29 @@ class Interface:
 
         self.stdscr.refresh()
 
+    def scan_network(self, netmask: str):
+        """
+        Scans the network periodically, printing the results on screen
+        :param netmask: netmask of the LAN in CIDR format, like 192.168.1.1/24
+        :return: nothing, this function will run on a separate thread
+        """
+        manufacturers = {}
+        with open("manufacturers.txt") as f:
+            for line in f:
+                mac, manufacturer_name = tuple(line.strip().split('\t'))
+                manufacturers[mac] = manufacturer_name
+
+        while True:
+            devices = get_devices(netmask, Interface.SCAN_TIMEOUT, manufacturers=manufacturers)
+
+            with self.mutex:
+                self.devices.extend(device for device in devices if device not in self.devices)
+                self.devices.sort()
+
+            self.print_menu()
+
+            sleep(Interface.SCAN_DELAY)
+
     def main(self, stdscr):
         # Save stdscr into class for convenience
         self.stdscr = stdscr
@@ -101,10 +128,8 @@ class Interface:
         ans, _ = sr(ARP(op="who-has", pdst=gateway_ip), verbose=False)
         gateway_mac = ans[0][1].hwsrc
         self.gateway = Device(ip_address=gateway_ip, mac_address=gateway_mac)
-        # Launch the discoverer thread
-        Thread(target=discoverer,
-               args=(cidr, self.devices, self.mutex, self.print_menu, 1),
-               daemon=True).start()
+        # Launch the scan_network thread
+        Thread(target=self.scan_network, args=(cidr,), daemon=True).start()
 
         try:
             while True:
