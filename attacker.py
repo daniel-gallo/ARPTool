@@ -1,11 +1,31 @@
 import curses
+from ipaddress import IPv4Network
+from os import getuid
 from threading import Thread, Lock
 from time import sleep
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple
+
+import netifaces
+from scapy.layers.l2 import ARP
+from scapy.sendrecv import sr
 
 from lan_scanner import get_devices, Device
 from mitm import Poisoner, is_ip_forwarding_enabled, enable_ip_forwarding, disable_ip_forwarding
-from utils import get_gateway_information, check_root
+
+
+def get_gateway_information() -> Tuple[str, str, str]:
+    """
+    Gets information about the default gateway
+    :return: (gateway_ip, gateway_mac, netmask) where netmask follows the CIDR notation
+    """
+    gateway_ip, interface = netifaces.gateways()["default"][netifaces.AF_INET]
+    netmask = netifaces.ifaddresses(interface)[netifaces.AF_INET][0]["netmask"]
+    mask_bits = IPv4Network(f"0.0.0.0/{netmask}").prefixlen
+    cidr = f"{gateway_ip}/{mask_bits}"
+    ans, _ = sr(ARP(op="who-has", pdst=gateway_ip), verbose=False)
+    gateway_mac = ans[0][1].hwsrc
+
+    return gateway_ip, gateway_mac, cidr
 
 
 class Interface:
@@ -165,5 +185,8 @@ class Interface:
 
 
 if __name__ == '__main__':
-    check_root()
+    if getuid() != 0:
+        print("You have to run this script as root")
+        exit(1)
+
     Interface()

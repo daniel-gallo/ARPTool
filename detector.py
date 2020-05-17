@@ -1,4 +1,5 @@
 import argparse
+from os import getuid
 from threading import Thread
 from time import sleep
 from typing import Tuple
@@ -7,7 +8,7 @@ from scapy.layers.l2 import Ether, ARP
 from scapy.sendrecv import sniff
 
 from mitm import get_arp_cache
-from utils import check_root, show_notification
+from notifications import NotificationManager
 
 
 def get_macs(ip: str, timeout: int = None) -> Tuple:
@@ -44,12 +45,12 @@ def verify(ip_address: str, alleged_mac_address: str):
     elif len(macs) == 1:
         real_mac_address = macs[0]
         if real_mac_address != alleged_mac_address:
-            show_notification("WARNING",
-                              f"{alleged_mac_address} is pretending to be {real_mac_address} at {ip_address}")
+            NotificationManager().show_notification("WARNING",
+                                                    f"{alleged_mac_address} is pretending to be {real_mac_address} at {ip_address}")
     else:
         # Two or more devices (pretend they) have the same IP address
-        show_notification("WARNING",
-                          f"All these devices think they have the IP address {ip_address}: {macs}")
+        NotificationManager().show_notification("WARNING",
+                                                f"All these devices think they have the IP address {ip_address}: {macs}")
 
 
 def callback(packet: Ether):
@@ -84,8 +85,11 @@ if __name__ == '__main__':
         print("You cannot select both a passive and an active detection")
         exit(1)
 
+    NotificationManager()
     if args.active:
-        check_root()
+        if getuid() != 0:
+            print("You have to run this script as root")
+            exit(1)
         try:
             thread = Thread(target=sniff, kwargs={"store": False, "prn": callback}, daemon=True)
             thread.start()
@@ -100,7 +104,7 @@ if __name__ == '__main__':
                     for j in range(i + 1, len(devices)):
                         if devices[i].mac_address == devices[j].mac_address:
                             message = f"{devices[i].ip_address} has the same MAC address as {devices[j].ip_address}"
-                            show_notification("WARNING", message)
+                            NotificationManager().show_notification("WARNING", message)
 
                 sleep(1)
         except KeyboardInterrupt:
