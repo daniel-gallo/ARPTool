@@ -76,7 +76,7 @@ if __name__ == '__main__':
             for i in range(len(devices)):
                 for j in range(i + 1, len(devices)):
                     if devices[i].mac_address == devices[j].mac_address:
-                        message = f"{devices[i].ip_address} has the same MAC address as {devices[i].ip_address}"
+                        message = f"{devices[i].ip_address} has the same MAC address as {devices[j].ip_address}"
                         show_notification("WARNING", message)
 
             sleep(1)
