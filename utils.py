@@ -1,4 +1,6 @@
 from ipaddress import IPv4Network
+from shutil import which
+from os import system
 from typing import Tuple
 
 import netifaces
@@ -19,3 +21,13 @@ def get_gateway_information() -> Tuple[str, str, str]:
     gateway_mac = ans[0][1].hwsrc
 
     return gateway_ip, gateway_mac, cidr
+
+
+def show_notification(title: str, message: str):
+    """
+    Shows a notification on screen. Supports macOS.
+    :param title: title of the notification
+    :param message: message of the notification
+    """
+    if which("osascript"):
+        system(f"osascript -e 'display notification \"{message}\" with title \"{title}\"'")
