@@ -7,7 +7,7 @@ It provides a nice CLI to see the devices on the LAN and perform ARP spoofing at
 sudo python attacker.py
 ```
 
-![](/home/daniel/PycharmProjects/ARPTool/doc/attacker.png)
+![](doc/attacker.png)
 
 To ARP spoof a device just select it using the arrows and press `Enter` or `Space`.  An asterisk indicates whether a device is being spoofed or not. IP Forwarding can be enabled or disabled pressing `Tab`. Spoofed devices won't have Internet access unless IP Forwarding is enabled. To quit, press `q` or `Control+C`.
 
