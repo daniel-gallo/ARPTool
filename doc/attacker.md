@@ -1,0 +1,22 @@
+# Attacker
+
+## Interface
+
+The interface has been created using the curses library, which is included by default in every Python installation.
+
+## Discovery thread
+
+A thread runs the function `scan_network` in the background looking for devices in the local network and printing the results.
+
+### LAN scanner
+
+First of all, basic information about the default interface is gathered (such as the network submask and the gateway IP and MAC addresses). From then on, a "who-has" ARP message is sent periodically to every possible IP to discover new devices. Furthermore, the program will try to obtain the manufacturer of every discovered device using its MAC address and the `manufacturers.txt`file.
+
+## Poisoner
+
+When a device is selected (pressing `Enter` or `Space`), the poisoning starts. Initially, I had in mind the following two procedures:
+
+* **Make the victim think we are the gateway.** This is done sending a "is-at" ARP message to the victim (that is, the destination IP and MAC are the victim's) saying that the gateway has our MAC address. For example, "192.168.1.1 is at 00:11:22:33:44:55", where 00:11:22:33:44:55 is our MAC address. This simple message will change the victim's ARP cache, and all the data that would normally go to the gateway will go through our machine instead. It is important to enable IP forwarding if we want the victim to keep on communicating with the Internet. If we don't, the victim will send us their traffic and we will drop it. Pressing `Tab` will toggle IP forwarding.
+* **Make the gateway think we are the victim.** The idea is the same as before, but unfortunately this don't usually work. An ARP spoofing attack that combines these two procedures is called a duplex attack, but modern routers block it, so the code corresponding to this method is commented in `mitm.py`.
+
+We should keep in mind that after the attack we should restore the victim's ARP cache. This is done by sending a "is-at" ARP message to the victim (just like before) with the real gateway MAC address. The actual implementation is done in the `Poisoner` class. This class stores the gateway and target's IP and MAC addresses, a thread (which will send a poisoning ARP message to the victim periodically) and an `Event` object. The `Event` object acts a sentinel, so the loop will keep on going until the `Event` is set. In addition, the sleep between loop iterations is not done using the `sleep` function but the sentinel's one. This makes possible to stop the thread almost immediately (note that if an ordinary variable had been used we would have to wait until the sleep had finished). Nobody should access the thread nor the `Event` object from the outside. Thus, they are private variables. This class has two methods: stop and stop_and_join. The first one will set the `Event`, and the second one will also wait until the thread has finished.
