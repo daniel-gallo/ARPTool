@@ -69,6 +69,10 @@ __linux_filename = "/proc/sys/net/ipv4/ip_forward"
 
 
 def is_ip_forwarding_enabled() -> bool:
+    """
+    Checks if IP forwarding is enabled. Supports Linux and macOS.
+    :return: true if it is enabled, false otherwise
+    """
     if platform.system() == "Linux":
         with open(__linux_filename, "r") as f:
             return f.read().strip() == '1'
@@ -88,8 +92,15 @@ def __change_ip_forwarding(value: int):
 
 
 def enable_ip_forwarding():
+    """
+    Enables IP forwarding (Linux and macOS supported)
+    """
     __change_ip_forwarding(1)
 
 
 def disable_ip_forwarding():
+    """
+    Disables IP forwarding (Linux and macOS supported)
+    :return:
+    """
     __change_ip_forwarding(0)
