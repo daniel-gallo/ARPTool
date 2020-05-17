@@ -111,7 +111,7 @@ def get_arp_cache() -> List[Device]:
         lines = check_output(("ip", "neigh")).decode().split('\n')
         for line in lines:
             fields = line.split()
-            if len(fields) >= 4:
+            if len(fields) > 4:
                 ip_address = fields[0]
                 try:
                     IPv4Network(ip_address)
@@ -123,7 +123,7 @@ def get_arp_cache() -> List[Device]:
         lines = check_output(("arp", "-a")).decode().split('\n')
         for line in lines:
             fields = line.split()
-            if len(fields) >= 3:
+            if len(fields) > 3:
                 ip_address = fields[1][1:-1]
                 mac_address = fields[3]
                 devices.append(Device(ip_address, mac_address))
