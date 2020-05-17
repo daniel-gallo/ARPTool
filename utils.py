@@ -25,15 +25,14 @@ def get_gateway_information() -> Tuple[str, str, str]:
 
 def show_notification(title: str, message: str):
     """
-    Shows a notification on screen. At the moment it only supports macOS notification, since Linux's notify-send
-    won't work when run as root.
+    Shows a notification on screen. Supports macOS notifications and Linux notify-send (but not as root)
     :param title: title of the notification
     :param message: message of the notification
     """
     if which("osascript"):
         system(f"osascript -e 'display notification \"{message}\" with title \"{title}\"'")
-    # elif which("notify-send"):
-    #     system(f"notify-send '{title}' '{message}'")
+    elif which("notify-send") and getuid() != 0:
+        system(f"notify-send '{title}' '{message}'")
     else:
         print(f"[{title}] {message}")
 
