@@ -1,13 +1,11 @@
 import curses
-from ipaddress import IPv4Network
-from os import getuid
 from threading import Thread, Lock
 from time import sleep
 from typing import Optional, List, Dict
 
 from lan_scanner import get_devices, Device
 from mitm import Poisoner, is_ip_forwarding_enabled, enable_ip_forwarding, disable_ip_forwarding
-from utils import get_gateway_information
+from utils import get_gateway_information, check_root
 
 
 class Interface:
@@ -167,8 +165,5 @@ class Interface:
 
 
 if __name__ == '__main__':
-    if getuid() != 0:
-        print("You have to run this script as root")
-        exit(1)
-
+    check_root()
     Interface()

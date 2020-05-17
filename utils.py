@@ -1,6 +1,6 @@
 from ipaddress import IPv4Network
 from shutil import which
-from os import system
+from os import system, getuid
 from typing import Tuple
 
 import netifaces
@@ -36,3 +36,9 @@ def show_notification(title: str, message: str):
     #     system(f"notify-send '{title}' '{message}'")
     else:
         print(f"[{title}] {message}")
+
+
+def check_root():
+    if getuid() != 0:
+        print("You have to run this script as root")
+        exit(1)
