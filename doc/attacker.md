@@ -6,11 +6,7 @@ The interface has been created using the curses library, which is included by de
 
 ## Discovery thread
 
-A thread runs the function `scan_network` in the background looking for devices in the local network and printing the results.
-
-### LAN scanner
-
-First of all, basic information about the default interface is gathered (such as the network submask and the gateway IP and MAC addresses). From then on, a "who-has" ARP message is sent periodically to every possible IP to discover new devices. Furthermore, the program will try to obtain the manufacturer of every discovered device using its MAC address and the `manufacturers.txt`file.
+A thread runs the function `scan_network` in the background looking for devices in the local network and printing the results. First of all, basic information about the default interface is gathered (such as the network submask and the gateway IP and MAC addresses). From then on, a "who-has" ARP message is sent periodically to every possible IP to discover new devices. Furthermore, the program will try to obtain the manufacturer of every discovered device using its MAC address and the `manufacturers.txt`file.
 
 ## Poisoner
 
