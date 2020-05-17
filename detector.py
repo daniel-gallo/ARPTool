@@ -1,6 +1,7 @@
 import argparse
+from threading import Thread
 from time import sleep
-from typing import Optional
+from typing import Tuple
 
 from scapy.layers.l2 import Ether, ARP
 from scapy.sendrecv import sniff
@@ -9,46 +10,59 @@ from mitm import get_arp_cache
 from utils import check_root, show_notification
 
 
-def get_mac(ip: str, timeout: int = 1) -> Optional[str]:
+def get_macs(ip: str, timeout: int = None) -> Tuple:
     """
-    Gets the MAC address of a given IP address
+    Gets the MAC addresses of a given IP address
     :param ip: IP address
-    :param timeout: maximum time this function will take
-    :return: a string with the MAC address of the provided IP address if found. If not, None will be returned.
+    :param timeout: if provided the function will wait timeout seconds, even if we already have a MAC address. If not,
+    the function will terminate as soon as we have a MAC address.
+    :return: a list of the MAC addresses of the devices that have that IP address
     """
     from scapy.layers.l2 import Ether, ARP
     from scapy.sendrecv import srp
 
     packet = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=ip)
-    if timeout:
-        answers, _ = srp(packet, timeout=timeout, verbose=False)
+    if timeout is not None:
+        answers, _ = srp(packet, multi=True, timeout=timeout, verbose=False)
     else:
         answers, _ = srp(packet, verbose=False)
 
-    if answers:
-        return answers[0][1][1].hwsrc
+    return tuple(set((answer[1][1].hwsrc for answer in answers)))
+
+
+def verify(ip_address: str, alleged_mac_address: str):
+    """
+    Compares the ARP packet's MAC address with the MAC address that can be obtained using a "who-has".
+    :param ip_address: ip_address of the "is-at" packet
+    :param alleged_mac_address:  mac_address of the "is-at" packet
+    """
+    macs = get_macs(ip_address)
+
+    if len(macs) == 0:
+        # There was a timout getting the MAC address
+        return
+    elif len(macs) == 1:
+        real_mac_address = macs[0]
+        if real_mac_address != alleged_mac_address:
+            show_notification("WARNING",
+                              f"{alleged_mac_address} is pretending to be {real_mac_address} at {ip_address}")
     else:
-        return None
+        # Two or more devices (pretend they) have the same IP address
+        show_notification("WARNING",
+                          f"All these devices think they have the IP address {ip_address}: {macs}")
 
 
 def callback(packet: Ether):
     """
     Callback for the sniff function.
-    When it receives an "is-at" ARP packet, it will compare the ARP packet's MAC address with the MAC address that can
-    be obtained using a "who-has".
-    :param packet:
-    :return:
+    Verifies every "is-at" ARP packet on a separate thread
+    :param packet
     """
     if packet.haslayer(ARP) and packet[ARP].op == 2:  # 2 = "is-at" mode
         ip_address = packet[ARP].psrc
-        real_mac = get_mac(ip_address)
-        if real_mac is None:
-            # There was a timeout getting the MAC address
-            return
         alleged_mac = packet[ARP].hwsrc
-        if real_mac != alleged_mac:
-            show_notification("WARNING",
-                              f"{real_mac} is pretending to be {alleged_mac} at {ip_address}")
+
+        Thread(target=verify, args=(ip_address, alleged_mac)).start()
 
 
 if __name__ == '__main__':
@@ -73,7 +87,9 @@ if __name__ == '__main__':
     if args.active:
         check_root()
         try:
-            sniff(store=False, prn=callback)
+            thread = Thread(target=sniff, kwargs={"store": False, "prn": callback}, daemon=True)
+            thread.start()
+            thread.join()
         except KeyboardInterrupt:
             pass
     elif args.passive:
