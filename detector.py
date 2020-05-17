@@ -76,6 +76,11 @@ if __name__ == '__main__':
                         "--active",
                         action="store_true",
                         help="Performs an active detection (requires root)")
+    parser.add_argument("-d",
+                        "--delay",
+                        type=float,
+                        help="Don't show the same notification twice in less than <delay> seconds",
+                        default=10)
 
     args = parser.parse_args()
     if not args.passive and not args.active:
@@ -85,7 +90,7 @@ if __name__ == '__main__':
         print("You cannot select both a passive and an active detection")
         exit(1)
 
-    NotificationManager()
+    NotificationManager(args.delay)
     if args.active:
         if getuid() != 0:
             print("You have to run this script as root")
