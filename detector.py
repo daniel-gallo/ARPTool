@@ -1,13 +1,16 @@
 import argparse
+from ipaddress import IPv4Network
 from os import getuid
+from shutil import which
+from subprocess import check_output
 from threading import Thread
 from time import sleep
-from typing import Tuple
+from typing import Tuple, List
 
 from scapy.layers.l2 import Ether, ARP
 from scapy.sendrecv import sniff
 
-from mitm import get_arp_cache
+from lan_scanner import Device
 from notifications import NotificationManager
 
 
@@ -31,6 +34,37 @@ def get_macs(ip: str, timeout: int = None) -> Tuple:
     return tuple(set((answer[1][1].hwsrc for answer in answers)))
 
 
+def get_arp_cache() -> List[Device]:
+    """
+    Fetch the system arp cache (supports ip neigh and arp -a)
+    :return: a list of the cached_devices cached
+    """
+    cached_devices = []
+
+    if which("ip") is not None:
+        lines = check_output(("ip", "neigh")).decode().split('\n')
+        for line in lines:
+            fields = line.split()
+            if len(fields) > 4:
+                ip_address = fields[0]
+                try:
+                    IPv4Network(ip_address)
+                except ValueError:
+                    continue
+                mac_address = fields[4]
+                cached_devices.append(Device(ip_address, mac_address))
+    elif which("arp") is not None:
+        lines = check_output(("arp", "-a")).decode().split('\n')
+        for line in lines:
+            fields = line.split()
+            if len(fields) > 3:
+                ip_address = fields[1][1:-1]
+                mac_address = fields[3]
+                cached_devices.append(Device(ip_address, mac_address))
+
+    return cached_devices
+
+
 def verify(ip_address: str, alleged_mac_address: str):
     """
     Compares the ARP packet's MAC address with the MAC address that can be obtained using a "who-has".
@@ -45,12 +79,12 @@ def verify(ip_address: str, alleged_mac_address: str):
     elif len(macs) == 1:
         real_mac_address = macs[0]
         if real_mac_address != alleged_mac_address:
-            NotificationManager().show_notification("WARNING",
-                                                    f"{alleged_mac_address} is pretending to be {real_mac_address} at {ip_address}")
+            spoof_detected_message = f"{alleged_mac_address} is pretending to be {real_mac_address} at {ip_address}"
+            NotificationManager().show_notification("WARNING", spoof_detected_message)
     else:
         # Two or more devices (pretend they) have the same IP address
-        NotificationManager().show_notification("WARNING",
-                                                f"All these devices think they have the IP address {ip_address}: {macs}")
+        duplicate_macs_message = f"All these devices think they have the IP address {ip_address}: {macs}"
+        NotificationManager().show_notification("WARNING", duplicate_macs_message)
 
 
 def callback(packet: Ether):
