@@ -1,5 +1,14 @@
 # ARPTool
 ARPTool is my project for UAM's *Communication Networks II* course. It has two main programs, both written in Python 3.6+.
+
+## Requirements
+
+ARPTool works on Linux and macOS. It uses several third party libraries, which can be installed running pip:
+
+```bash
+pip install -r requirements.txt
+```
+
 ## Attacker
 It provides a nice CLI to see the devices on the LAN and perform ARP spoofing attacks on them.
 
@@ -9,11 +18,11 @@ sudo python attacker.py
 
 ![](doc/attacker.png)
 
-To ARP spoof a device just select it using the arrows and press `Enter` or `Space`.  An asterisk indicates whether a device is being spoofed or not. IP Forwarding can be enabled or disabled pressing `Tab`. Spoofed devices won't have Internet access unless IP Forwarding is enabled. To quit, press `q` or `Control+C`.
+To ARP spoof a device just select it using the arrows and press `Enter` or `Space`.  An asterisk indicates whether a device is being spoofed or not. IP Forwarding can be enabled or disabled pressing `Tab`. Spoofed devices won't have Internet access unless IP Forwarding is enabled. To quit, press `q` or `Control+C`.  [Click here](doc/attacker.md) for a more detailed explanation.
 
 ## Detector
 
-Two detectors have been implemented.
+Two detectors have been implemented. For a more thorough description [click here](doc/detector.md).
 
 ### Passive detector
 
