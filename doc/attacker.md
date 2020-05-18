@@ -1,12 +1,14 @@
 # Attacker
 
+A lot of different tools perform ARP spoofing attacks, such as Bettercap (written in Golang) and zANTI (available for rooted Android devices). Nonetheless, I wanted to get a better grasp on this topic, and that's why I developed this program. 
+
 ## Interface
 
 The interface has been created using the curses library, which is included by default in every Python installation.
 
 ## Discovery thread
 
-A thread runs the function `scan_network` in the background looking for devices in the local network and printing the results. First of all, basic information about the default interface is gathered (such as the network submask and the gateway IP and MAC addresses). From then on, a "who-has" ARP message is sent periodically to every possible IP to discover new devices. Furthermore, the program will try to obtain the manufacturer of every discovered device using its MAC address and the `manufacturers.txt`file.
+A thread runs the function `scan_network` in the background looking for devices in the local network and printing the results. First of all, basic information about the default interface is gathered (such as the network submask and the gateway IP and MAC addresses). From then on, a "who-has" ARP message is sent periodically to every possible IP to discover new devices. Furthermore, the program will try to obtain the manufacturer of every discovered device using its MAC address and the `manufacturers.txt` file.
 
 ## Poisoner
 
@@ -19,11 +21,11 @@ We should keep in mind that after the attack we should restore the victim's ARP 
 
 ## MitM attacks
 
-Once the attacker is in the middle, that is, all the traffic from the victim is routed through the attacker, several attack vectors arise.
+Once the attacker is in the middle, that is, all traffic from the victim is routed through the attacker, several attack vectors arise.
 
 ### DoS
 
-If the attacker disables IP forwarding, all the traffic from the victim to the outside world will be dropped, leaving the victim without connection.
+If the attacker disables IP forwarding, all traffic from the victim to the outside world will be dropped, leaving the victim without connection.
 
 ### Credential sniffing
 
@@ -35,7 +37,7 @@ SSLStrip is a tool that mantains an HTTPS connection between the attacker and th
 
 ### Watch activity
 
-Even if the traffic is cyphered, DNS messages are *usually* not (the reason for that *usually* is that companies such as Firefox are starting to deploy DNS over HTTPS (DoH)). The attacker can exploit this to see all the DNS requests of the victim, getting the websites they visit, the email provider they use...
+Even if traffic is cyphered, DNS messages are *usually* not (the reason for that *usually* is that companies such as Firefox are starting to deploy DNS over HTTPS (DoH)). The attacker can exploit this to see all the DNS requests of the victim, getting the websites they visit, the email provider they use...
 
 ![](dns.png)
 

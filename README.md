@@ -22,7 +22,7 @@ To ARP spoof a device just select it using the arrows and press `Enter` or `Spac
 
 ## Detector
 
-Two detectors have been implemented. For a more thorough description [click here](doc/detector.md).
+This program will notify the user if an ARP spoofing attack is detected. To quit, just press `Control+C`. For a more thorough description [click here](doc/detector.md).
 
 ### Passive detector
 
@@ -38,6 +38,18 @@ Every ARP *is-at* message received will be analyzed. For instance if "192.168.1.
 
 ```bash
 sudo python detector.py --active
+```
+
+### Notification frequency
+
+By default, the detector won't show the same notification twice in less than 10 seconds, to avoid a notification flood. That threshold can be modified using the delay flag. Some examples are shown below.
+
+```bash
+python detector --passive --delay 60
+```
+
+```bash
+sudo python detector --active --delay 30
 ```
 
 
